@@ -45,6 +45,91 @@ function requireAuth(req, res, next) {
     }
 }
 
+// Role-based middleware functions
+function requireManager(req, res, next) {
+    // Extract token from Authorization header
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'No token provided' });
+    }
+    
+    // Get the token (remove 'Bearer ' prefix)
+    const token = authHeader.substring(7);
+    
+    try {
+        // Verify and decode the token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        // User info is now available from the token
+        req.user = {
+            id: decoded.id,
+            username: decoded.username,
+            email: decoded.email,
+            role: decoded.role
+        };
+        
+        // Check if user has manager or admin role
+        if (req.user.role === 'manager' || req.user.role === 'admin') {
+            next();
+        } else {
+            return res.status(403).json({ 
+                error: 'Access denied. Manager role required.' 
+            });
+        }
+    } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ error: 'Token expired' });
+        } else if (error.name === 'JsonWebTokenError') {
+            return res.status(401).json({ error: 'Invalid token' });
+        } else {
+            return res.status(401).json({ error: 'Token verification failed' });
+        }
+    }
+}
+
+function requireAdmin(req, res, next) {
+    // Extract token from Authorization header
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'No token provided' });
+    }
+    
+    // Get the token (remove 'Bearer ' prefix)
+    const token = authHeader.substring(7);
+    
+    try {
+        // Verify and decode the token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        // User info is now available from the token
+        req.user = {
+            id: decoded.id,
+            username: decoded.username,
+            email: decoded.email,
+            role: decoded.role
+        };
+        
+        // Check if user has admin role
+        if (req.user.role === 'admin') {
+            next();
+        } else {
+            return res.status(403).json({ 
+                error: 'Access denied. Admin role required.' 
+            });
+        }
+    } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ error: 'Token expired' });
+        } else if (error.name === 'JsonWebTokenError') {
+            return res.status(401).json({ error: 'Invalid token' });
+        } else {
+            return res.status(401).json({ error: 'Token verification failed' });
+        }
+    }
+}
+
 // Test database connection
 async function testConnection() {
     try {
