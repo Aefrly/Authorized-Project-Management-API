@@ -62,7 +62,7 @@ testConnection();
 // POST /api/register - Register new user
 app.post('/api/register', async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, role } = req.body;
         
         // Check if user exists
         const existingUser = await User.findOne({ where: { email } });
@@ -77,8 +77,8 @@ app.post('/api/register', async (req, res) => {
         const newUser = await User.create({
             name,
             email,
-            password: hashedPassword
-            // TODO: Add role field
+            password: hashedPassword,
+            role: role || 'employee' // Default to 'employee' if role not provided
         });
         
         res.status(201).json({
@@ -86,7 +86,8 @@ app.post('/api/register', async (req, res) => {
             user: {
                 id: newUser.id,
                 name: newUser.name,
-                email: newUser.email
+                email: newUser.email,
+                role: newUser.role
             }
         });
         
